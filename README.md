@@ -1,4 +1,4 @@
-# ddv-upload
+# ddv-upload-api
 >这是一个基于[Promise](https://www.promisejs.org/)封装的请求模块
 
 ## 安装
@@ -6,13 +6,13 @@
 **npm:**
 
 ```shell
-$ npm install ddv-upload
+$ npm install ddv-upload-api
 ```
 
 **引入:**
 
 ```javascript
-import * as api from 'ddv-upload';
+import * as api from 'ddv-upload-api';
 ```
 
 
@@ -21,7 +21,7 @@ import * as api from 'ddv-upload';
 你可以直接使用`<script>`标签直接引入， `ddvUpload` 会被注册为一个全局变量。
 
 ```html
-<script src="https://unpkg.com/ddv-upload/dist/api.js"></script>
+<script src="https://unpkg.com/ddv-upload-api/dist/api.js"></script>
 ```
 
 需要注意的是，为了兼容IE9以下版本浏览器需要预先加载[es5-shim](https://github.com/es-shims/es5-shim)。
