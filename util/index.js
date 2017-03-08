@@ -75,8 +75,10 @@ var util = module.exports = {
       }
     } else if (typeof myObj === 'object') {
       myNewObj = {}
+      if (myObj.constructor && myObj.constructor !== Object) {
+        myNewObj = myObj
       // 防止克隆ie下克隆  Element 出问题
-      if (myObj.innerHTML !== undefined && myObj.innerText !== undefined && myObj.tagName !== undefined && myObj.tabIndex !== undefined) {
+      } else if (myObj.innerHTML !== undefined && myObj.innerText !== undefined && myObj.tagName !== undefined && myObj.tabIndex !== undefined) {
         myNewObj = myObj
       } else {
         for (i in myObj) {
