@@ -951,8 +951,10 @@ var util = module.exports = {
       }
     } else if ((typeof myObj === 'undefined' ? 'undefined' : _typeof(myObj)) === 'object') {
       myNewObj = {};
-      // 防止克隆ie下克隆  Element 出问题
-      if (myObj.innerHTML !== undefined && myObj.innerText !== undefined && myObj.tagName !== undefined && myObj.tabIndex !== undefined) {
+      if (myObj.constructor && myObj.constructor !== Object) {
+        myNewObj = myObj;
+        // 防止克隆ie下克隆  Element 出问题
+      } else if (myObj.innerHTML !== undefined && myObj.innerText !== undefined && myObj.tagName !== undefined && myObj.tabIndex !== undefined) {
         myNewObj = myObj;
       } else {
         for (i in myObj) {
@@ -1019,17 +1021,22 @@ module.exports = {
       self._fileInfo.fileSize = self.file.size;
       // 获取文件类型
       self._fileInfo.fileType = self.file.type;
-      // 上传完成
-      self.uploadResolve = resolve;
-      // 上传失败
-      self.uploadReject = reject;
+      // 上传进度反馈
+      self._onUploadPartProgressArray = {};
       // 运行程序
-      self.run();
+      self.run().then(resolve, reject);
       // 回收
       resolve = reject = void 0;
-    }).then(function () {
-      // 在成功的时候的参数传回去
-      return self.useUnderline ? util.upperCaseToUnderlineByObj(self._fileInfo) : self._fileInfo;
+    })
+    // 上传进度触发
+    .then(function () {
+      return self.onProgressUploadEmit();
+    })
+    // 完成 - 在成功的时候的参数传回去
+    .then(function uploadResolveRun() {
+      self._fileInfo.status = 'uploadResolve';
+      var fileInfo = util.clone(self._fileInfo);
+      return self.useUnderline ? util.upperCaseToUnderlineByObj(fileInfo) : fileInfo;
     });
     setTimeout(function () {
       // 回收
@@ -1050,7 +1057,7 @@ module.exports = {
   },
   run: function run() {
     var self = this;
-    new Promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject) {
       // 设备类型
       self._fileInfo.deviceType = self.deviceType || 'html5';
       if (util.isFunction(api.api)) {
@@ -1108,6 +1115,7 @@ module.exports = {
           }).then(function onProgressEmit() {
             if (util.isFunction(self.onProgress)) {
               var t = util.clone(res);
+              t.type = 'sign';
               t.progress = (t.progress * 0.15).toFixed(4) * 1;
               return self.onProgress(self.useUnderline ? util.upperCaseToUnderlineByObj(t) : t);
             }
@@ -1177,19 +1185,15 @@ module.exports = {
       self._fileInfo.fileMd5 = res.fileMd5;
       self._fileInfo.fileSha1 = res.fileSha1;
       self._fileInfo.isUploadEnd = res.isUploadEnd || false;
-      if (res.isUploadEnd) {
-        return self.uploadResolve();
-      } else {
+      if (!res.isUploadEnd) {
         return self.uploadRun();
       }
-    }).then(function () {
-      var res = util.clone(self._fileInfo);
-      self.useUnderline ? util.upperCaseToUnderlineByObj(util.clone(res)) : util.clone(res);
     });
   },
   uploadRun: function uploadRun() {
     var self = this;
     return Promise.resolve().then(function getFilePartInfoRun() {
+      self._fileInfo.status = 'getFilePartInfoRun';
       var fileInfo = {
         fileId: self._fileInfo.fileId,
         fileCrc32: self._fileInfo.fileCrc32,
@@ -1203,6 +1207,7 @@ module.exports = {
         return Promise.reject(util.setErrorId('GET_FILE_PART_INFO_RETURN_PROMISE', new Error('optionts.getFilePartInfo does not return Promise')));
       }
     }).then(function getFilePartInfoCheck(res) {
+      self._fileInfo.status = 'getFilePartInfoCheck';
       res = util.clone(res);
       var keyt, key, value;
       for (key in res) {
@@ -1239,16 +1244,15 @@ module.exports = {
       self._fileInfo.partNow = 0;
       self._fileInfo.uploadSizeComplete = 0;
       self._fileInfo.isUploadEnd = res.isUploadEnd || self._fileInfo.isUploadEnd || false;
-      if (res.isUploadEnd) {
-        return self.uploadResolve();
-      } else {
+      if (!res.isUploadEnd) {
         return self.uploadPart();
       }
     });
   },
   uploadPart: function uploadPart() {
     var self = this;
-    self.onProgressUploadEmit().then(function () {
+    return Promise.resolve().then(function () {
+      self._fileInfo.status = 'uploadPart';
       self._fileInfo.partNow = self._fileInfo.partNow === void 0 ? -1 : self._fileInfo.partNow;
       while (++self._fileInfo.partNow <= self._fileInfo.partSum) {
         if (self._fileInfo.partNow === 0 || util.inArray(self._fileInfo.partNow, self._fileInfo.doneParts)) {
@@ -1348,37 +1352,75 @@ module.exports = {
       });
     }).then(function sendUploadPartRun(res) {
       self._fileInfo.status = 'sendUploadPart';
-      return sendUploadPart(res.data, res.rawData);
+      return sendUploadPart(res.data, res.rawData, function onUploadPartProgress(progress) {
+        if (self._onUploadPartProgressArray) {
+          self._onUploadPartProgressArray[partNum] = progress;
+        }
+        return self.onProgressUploadEmit();
+      }).catch(function sendUploadPartCatch(e) {
+        if (self._onUploadPartProgressArray) {
+          delete self._onUploadPartProgressArray[partNum];
+        }
+        return Promise.reject(e);
+      }).then(function sendUploadPartCb() {
+        self._fileInfo.doneParts.push(partNum);
+        if (self._onUploadPartProgressArray[partNum] !== 1) {
+          delete self._onUploadPartProgressArray[partNum];
+          return self.onProgressUploadEmit();
+        } else {
+          delete self._onUploadPartProgressArray[partNum];
+        }
+      });
     });
   },
-  onProgressUploadEmit: function onProgressUploadEmit() {
-    return Promise.resolve();
-  },
-  // 返回上传结果
-  uploadResolve: function uploadResolve() {
-    var fileInfo = util.clone(this._fileInfo);
-    return Promise.resolve(this.useUnderline ? util.upperCaseToUnderlineByObj(fileInfo) : fileInfo);
+  onProgressUploadEmit: function onProgressUploadEmit(progress) {
+    if (this._fileInfo) {
+      if (this._fileInfo.isUploadEnd) {
+        progress = 1;
+      } else if (!progress) {
+        progress = (util.isArray(this._fileInfo.doneParts) ? this._fileInfo.doneParts.length : 0) / this._fileInfo.partSum;
+        if (this._onUploadPartProgressArray) {
+          var t, key;
+          t = this._onUploadPartProgressArray;
+          for (key in t) {
+            progress += (t[key] || 0) / this._fileInfo.partSum;
+          }
+        }
+      }
+    }
+    var self = this;
+    var res;
+    res = {};
+    res.status = this._fileInfo.status;
+    res.progress = (progress || 0).toFixed(4) * 1 || 0;
+    return Promise.resolve().then(function onProgressSignEmit() {
+      if (util.isFunction(self.onProgressUpload)) {
+        return self.onProgressUpload(self.useUnderline ? util.upperCaseToUnderlineByObj(util.clone(res)) : util.clone(res));
+      }
+    }).then(function onProgressEmit() {
+      if (util.isFunction(self.onProgress)) {
+        var t = util.clone(res);
+        t.type = 'upload';
+        t.progress = (t.progress * 0.85 + 0.15).toFixed(4) * 1;
+        return self.onProgress(self.useUnderline ? util.upperCaseToUnderlineByObj(t) : t);
+      }
+    });
   },
   // 合并上传提交
   completeUploadSubmit: function completeUploadSubmit() {
-    var self = this;
-    return Promise.resolve().then(function () {
-      self._fileInfo.status = 'completeUpload';
-      var fileInfo = {
-        fileId: self._fileInfo.fileId,
-        fileCrc32: self._fileInfo.fileCrc32,
-        fileMd5: self._fileInfo.fileMd5,
-        fileSha1: self._fileInfo.fileSha1
-      };
-      var _promise = self.completeUpload(self.useUnderline ? util.upperCaseToUnderlineByObj(fileInfo) : fileInfo);
-      if (_promise instanceof Promise) {
-        return _promise;
-      } else {
-        return Promise.reject(util.setErrorId('COMPLETE_UPLOAD_RETURN_PROMISE', new Error('optionts.completeUpload does not return Promise')));
-      }
-    }).then(function () {
-      return self.uploadResolve();
-    });
+    this._fileInfo.status = 'completeUpload';
+    var fileInfo = {
+      fileId: this._fileInfo.fileId,
+      fileCrc32: this._fileInfo.fileCrc32,
+      fileMd5: this._fileInfo.fileMd5,
+      fileSha1: this._fileInfo.fileSha1
+    };
+    var _promise = this.completeUpload(this.useUnderline ? util.upperCaseToUnderlineByObj(fileInfo) : fileInfo);
+    if (_promise instanceof Promise) {
+      return _promise;
+    } else {
+      return Promise.reject(util.setErrorId('COMPLETE_UPLOAD_RETURN_PROMISE', new Error('optionts.completeUpload does not return Promise')));
+    }
   },
   // 合并上传
   completeUpload: function completeUpload(fileInfo) {
@@ -1863,7 +1905,8 @@ GetSign.swapendian32 = function swapendian32(val) {
 
 
 module.exports = sendUploadPart;
-function sendUploadPart(optionts, rawData) {
+function sendUploadPart(optionts, rawData, onProgress) {
+  onProgress = typeof onProgress === 'function' ? onProgress : function () {};
   return new Promise(function (resolve, reject) {
     var xhr;
 
@@ -1936,6 +1979,14 @@ function sendUploadPart(optionts, rawData) {
       }
       value = Array.isArray(value) ? value.join(' ') : value;
     }
+    if (xhr.upload) {
+      xhr.upload.onprogress = function (res) {
+        res.loaded && onProgress((0.95 * ((res.loaded || 0) / res.total)).toFixed(4) * 1);
+      };
+    }
+    xhr.onprogress = function (res) {
+      res.loaded && onProgress((0.95 + 0.05 * ((res.loaded || 0) / res.total)).toFixed(4) * 1);
+    };
     xhr.send(rawData || null);
   });
 }
