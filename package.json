@@ -1,5 +1,6 @@
 {
   "name": "ddv-upload-api",
+  "version": "0.0.3",
   "description": "ddv-upload-api",
   "main": "./lib/api.js",
   "scripts": {
