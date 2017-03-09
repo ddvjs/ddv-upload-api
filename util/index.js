@@ -27,7 +27,7 @@ var util = module.exports = {
     return error
   },
   // 参数强转数组
-  argsToArray (args) {
+  argsToArray: function argsToArray (args) {
     return Array.prototype.slice.call(args)
   },
   // 判断是一个方法
@@ -48,14 +48,14 @@ var util = module.exports = {
     return false
   },
   // 判断是否为一个数组
-  isArray () {
+  isArray: function isArray () {
     return Array.isArray.apply(this, arguments)
   },
-  isNumber (obj) {
+  isNumber: function isNumber (obj) {
     return (typeof obj === 'string' || typeof obj === 'number') && (!util.isArray(obj) && (obj - parseFloat(obj) >= 0))
   },
   // 判断是否一个标准的global
-  isGlobal (obj) {
+  isGlobal: function isGlobal (obj) {
     return obj !== void 0 && obj === obj.global
   },
   // 克隆
