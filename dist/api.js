@@ -982,7 +982,7 @@ var util = __webpack_require__(2);
 var api = __webpack_require__(1);
 var getSign = __webpack_require__(5);
 var sendUploadPart = __webpack_require__(6);
-var eventNames = 'beforeSign completeSign progress progressSign progressUpload error complete'.split(' ');
+var eventNames = 'beforeSign completeSign progress progressSign progressUpload complete error success'.split(' ');
 module.exports = {
   constructor: function constructor(options) {
     // 初始化事件
@@ -1051,6 +1051,9 @@ module.exports = {
     if (this.onComplete && util.isFunction(this.onComplete)) {
       _promise.then(this.onComplete);
       delete this.onComplete;
+    } else if (this.onSuccess && util.isFunction(this.onSuccess)) {
+      _promise.then(this.onSuccess);
+      delete this.onSuccess;
     }
     // 返回一个 Promise
     return _promise;
