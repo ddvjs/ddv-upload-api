@@ -903,7 +903,6 @@ var util = module.exports = {
   argsToArray: function argsToArray(args) {
     return Array.prototype.slice.call(args);
   },
-
   // 判断是一个方法
   isFunction: function isFunction(fn) {
     return typeof fn === 'function';
@@ -928,12 +927,10 @@ var util = module.exports = {
   isNumber: function isNumber(obj) {
     return (typeof obj === 'string' || typeof obj === 'number') && !util.isArray(obj) && obj - parseFloat(obj) >= 0;
   },
-
   // 判断是否一个标准的global
   isGlobal: function isGlobal(obj) {
     return obj !== void 0 && obj === obj.global;
   },
-
   // 克隆
   clone: function clone(myObj) {
     var i, myNewObj;
