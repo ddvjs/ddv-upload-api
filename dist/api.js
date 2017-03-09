@@ -840,11 +840,11 @@ module.exports =
 
 
 module.exports = DdvUploadApi;
-function DdvUploadApi(option) {
+function DdvUploadApi(options) {
   if (!(this instanceof DdvUploadApi)) {
-    return new DdvUploadApi(option);
+    return new DdvUploadApi(options);
   } else {
-    return this.constructor(option);
+    return this.constructor(options);
   }
 }
 // 提供外部设定api
@@ -984,15 +984,15 @@ var getSign = __webpack_require__(5);
 var sendUploadPart = __webpack_require__(6);
 var eventNames = 'beforeSign completeSign progress progressSign progressUpload error complete'.split(' ');
 module.exports = {
-  constructor: function constructor(optionts) {
+  constructor: function constructor(options) {
     // 初始化事件
-    this.optiontsInit(optionts);
+    this.optionsInit(options);
     return this.runInit();
   },
-  optiontsInit: function optiontsInit(optionts) {
+  optionsInit: function optionsInit(options) {
     var key, value, tkey;
-    for (key in optionts) {
-      value = optionts[key];
+    for (key in options) {
+      value = options[key];
       tkey = key.substr(2, 1).toLowerCase() + key.substr(3);
       if (!key) continue;
       if (eventNames.indexOf(key) > -1) {
@@ -1004,10 +1004,10 @@ module.exports = {
           this[key] = value;
         }
       } else {
-        this[key] = optionts[key];
+        this[key] = options[key];
       }
     }
-    key = value = tkey = optionts = void 0;
+    key = value = tkey = options = void 0;
   },
   runInit: function runInit() {
     var self = this;
@@ -1073,7 +1073,7 @@ module.exports = {
       if (_promise instanceof Promise) {
         return _promise;
       } else {
-        return Promise.reject(util.setErrorId('GET_PART_SIZE_RETURN_PROMISE', new Error('optionts.getPartSize does not return Promise')));
+        return Promise.reject(util.setErrorId('GET_PART_SIZE_RETURN_PROMISE', new Error('options.getPartSize does not return Promise')));
       }
     }).then(function checkPartSize(partSize) {
       if (!partSize.part_size) {
@@ -1110,13 +1110,16 @@ module.exports = {
         onProgress: function onProgress(res) {
           return Promise.resolve().then(function onProgressSignEmit() {
             if (util.isFunction(self.onProgressSign)) {
-              return self.onProgressSign(self.useUnderline ? util.upperCaseToUnderlineByObj(util.clone(res)) : util.clone(res));
+              var t = util.clone(res);
+              t.percent = t.progress * 100;
+              return self.onProgressSign(self.useUnderline ? util.upperCaseToUnderlineByObj(t) : t);
             }
           }).then(function onProgressEmit() {
             if (util.isFunction(self.onProgress)) {
               var t = util.clone(res);
               t.type = 'sign';
               t.progress = (t.progress * 0.15).toFixed(4) * 1;
+              t.percent = t.progress * 100;
               return self.onProgress(self.useUnderline ? util.upperCaseToUnderlineByObj(t) : t);
             }
           });
@@ -1143,7 +1146,7 @@ module.exports = {
       if (_promise instanceof Promise) {
         return _promise;
       } else {
-        return Promise.reject(util.setErrorId('GET_FILE_ID_RETURN_PROMISE', new Error('optionts.getFileId does not return Promise')));
+        return Promise.reject(util.setErrorId('GET_FILE_ID_RETURN_PROMISE', new Error('options.getFileId does not return Promise')));
       }
     }).then(function getFileIdCheck(res) {
       res = util.clone(res);
@@ -1204,7 +1207,7 @@ module.exports = {
       if (_promise instanceof Promise) {
         return _promise;
       } else {
-        return Promise.reject(util.setErrorId('GET_FILE_PART_INFO_RETURN_PROMISE', new Error('optionts.getFilePartInfo does not return Promise')));
+        return Promise.reject(util.setErrorId('GET_FILE_PART_INFO_RETURN_PROMISE', new Error('options.getFilePartInfo does not return Promise')));
       }
     }).then(function getFilePartInfoCheck(res) {
       self._fileInfo.status = 'getFilePartInfoCheck';
@@ -1333,7 +1336,7 @@ module.exports = {
         if (_promise instanceof Promise) {
           return _promise;
         } else {
-          return Promise.reject(util.setErrorId('GET_FILE_PART_SIGN_RETURN_PROMISE', new Error('optionts.getFilePartSign does not return Promise')));
+          return Promise.reject(util.setErrorId('GET_FILE_PART_SIGN_RETURN_PROMISE', new Error('options.getFilePartSign does not return Promise')));
         }
       }).then(function getFilePartMd5Check(data) {
         if (!data.url) {
@@ -1395,13 +1398,16 @@ module.exports = {
     res.progress = (progress || 0).toFixed(4) * 1 || 0;
     return Promise.resolve().then(function onProgressSignEmit() {
       if (util.isFunction(self.onProgressUpload)) {
-        return self.onProgressUpload(self.useUnderline ? util.upperCaseToUnderlineByObj(util.clone(res)) : util.clone(res));
+        var t = util.clone(res);
+        t.percent = t.progress * 100;
+        return self.onProgressUpload(self.useUnderline ? util.upperCaseToUnderlineByObj(t) : t);
       }
     }).then(function onProgressEmit() {
       if (util.isFunction(self.onProgress)) {
         var t = util.clone(res);
         t.type = 'upload';
         t.progress = (t.progress * 0.85 + 0.15).toFixed(4) * 1;
+        t.percent = t.progress * 100;
         return self.onProgress(self.useUnderline ? util.upperCaseToUnderlineByObj(t) : t);
       }
     });
@@ -1419,7 +1425,7 @@ module.exports = {
     if (_promise instanceof Promise) {
       return _promise;
     } else {
-      return Promise.reject(util.setErrorId('COMPLETE_UPLOAD_RETURN_PROMISE', new Error('optionts.completeUpload does not return Promise')));
+      return Promise.reject(util.setErrorId('COMPLETE_UPLOAD_RETURN_PROMISE', new Error('options.completeUpload does not return Promise')));
     }
   },
   // 合并上传
@@ -1502,25 +1508,25 @@ var cryptoJsCore = __webpack_require__(0);
 // 事件
 var eventNames = 'before complete progress error complete'.split(' ');
 // 获取签名
-function GetSign(optionts) {
+function GetSign(options) {
   if (this instanceof GetSign) {
-    return this.constructor(optionts);
+    return this.constructor(options);
   } else {
-    return new GetSign(optionts);
+    return new GetSign(options);
   }
 }
 
 // 合并继承
 Object.assign(GetSign.prototype, {
-  constructor: function constructor(optionts) {
+  constructor: function constructor(options) {
     // 初始化事件
-    this.optiontsInit(optionts);
+    this.optionsInit(options);
     return this.runInit();
   },
-  optiontsInit: function optiontsInit(optionts) {
+  optionsInit: function optionsInit(options) {
     var key, value, tkey;
-    for (key in optionts) {
-      value = optionts[key];
+    for (key in options) {
+      value = options[key];
       tkey = key.substr(2, 1).toLowerCase() + key.substr(3);
       if (!key) continue;
       if (eventNames.indexOf(key) > -1) {
@@ -1532,10 +1538,10 @@ Object.assign(GetSign.prototype, {
           this[key] = value;
         }
       } else {
-        this[key] = optionts[key];
+        this[key] = options[key];
       }
     }
-    key = value = tkey = optionts = void 0;
+    key = value = tkey = options = void 0;
   },
   runInit: function runInit() {
     var self = this;
