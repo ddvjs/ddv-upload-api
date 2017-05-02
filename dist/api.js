@@ -7,9 +7,9 @@ module.exports =
 /******/ 	function __webpack_require__(moduleId) {
 /******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
+/******/ 		if(installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
-/******/
+/******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
@@ -64,7 +64,7 @@ module.exports =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 9);
+/******/ 	return __webpack_require__(__webpack_require__.s = 6);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -973,12 +973,12 @@ var util = module.exports = {
 // 编码库
 
 var cryptoJsCore = __webpack_require__(0);
-__webpack_require__(7);
 __webpack_require__(8);
+__webpack_require__(9);
 var util = __webpack_require__(2);
 var api = __webpack_require__(1);
 var getSign = __webpack_require__(5);
-var sendUploadPart = __webpack_require__(6);
+var sendUploadPart = __webpack_require__(7);
 var eventNames = 'beforeSign completeSign progress progressSign progressUpload complete error success'.split(' ');
 module.exports = {
   constructor: function constructor(options) {
@@ -1070,7 +1070,7 @@ module.exports = {
     .then(function getPartSizeRun() {
       var fileInfo = util.clone(self._fileInfo);
       var _promise = self.getPartSize(self.useUnderline ? util.upperCaseToUnderlineByObj(fileInfo) : fileInfo);
-      if (_promise instanceof Promise) {
+      if (_promise && util.isFunction(_promise.then)) {
         return _promise;
       } else {
         return Promise.reject(util.setErrorId('GET_PART_SIZE_RETURN_PROMISE', new Error('options.getPartSize does not return Promise')));
@@ -1143,7 +1143,7 @@ module.exports = {
         }
       }
       var _promise = self.getFileId(self.useUnderline ? util.upperCaseToUnderlineByObj(fileInfo) : fileInfo);
-      if (_promise instanceof Promise) {
+      if (_promise && util.isFunction(_promise.then)) {
         return _promise;
       } else {
         return Promise.reject(util.setErrorId('GET_FILE_ID_RETURN_PROMISE', new Error('options.getFileId does not return Promise')));
@@ -1204,7 +1204,7 @@ module.exports = {
         fileSha1: self._fileInfo.fileSha1
       };
       var _promise = self.getFilePartInfo(self.useUnderline ? util.upperCaseToUnderlineByObj(fileInfo) : fileInfo);
-      if (_promise instanceof Promise) {
+      if (_promise && util.isFunction(_promise.then)) {
         return _promise;
       } else {
         return Promise.reject(util.setErrorId('GET_FILE_PART_INFO_RETURN_PROMISE', new Error('options.getFilePartInfo does not return Promise')));
@@ -1333,7 +1333,7 @@ module.exports = {
     }).then(function getFilePartMd5All(res) {
       return Promise.resolve().then(function getFilePartMd5Run() {
         var _promise = self.getFilePartSign(self.useUnderline ? util.upperCaseToUnderlineByObj(res.fileInfo) : res.fileInfo);
-        if (_promise instanceof Promise) {
+        if (_promise && util.isFunction(_promise.then)) {
           return _promise;
         } else {
           return Promise.reject(util.setErrorId('GET_FILE_PART_SIGN_RETURN_PROMISE', new Error('options.getFilePartSign does not return Promise')));
@@ -1422,7 +1422,7 @@ module.exports = {
       fileSha1: this._fileInfo.fileSha1
     };
     var _promise = this.completeUpload(this.useUnderline ? util.upperCaseToUnderlineByObj(fileInfo) : fileInfo);
-    if (_promise instanceof Promise) {
+    if (_promise && util.isFunction(_promise.then)) {
       return _promise;
     } else {
       return Promise.reject(util.setErrorId('COMPLETE_UPLOAD_RETURN_PROMISE', new Error('options.completeUpload does not return Promise')));
@@ -1588,7 +1588,7 @@ Object.assign(GetSign.prototype, {
         if (res === false) {
           // 返回中断
           return GetSign.getAbortError();
-        } else if (res instanceof Promise) {
+        } else if (res && util.isFunction(res.then)) {
           // 返回承诺
           return res;
         }
@@ -1774,7 +1774,7 @@ Object.assign(GetSign.prototype, {
     data.progress = (this.signReadpos / this.fileSize).toFixed(4) * 1;
     if (util.isFunction(this.onProgress, 'function')) {
       _promise = this.onProgress(data);
-      if (_promise instanceof Promise) {
+      if (_promise && util.isFunction(_promise.then)) {
         return _promise;
       }
     }
@@ -1910,6 +1910,15 @@ GetSign.swapendian32 = function swapendian32(val) {
 "use strict";
 
 
+module.exports = __webpack_require__(1);
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 module.exports = sendUploadPart;
 function sendUploadPart(optionts, rawData, onProgress) {
   onProgress = typeof onProgress === 'function' ? onProgress : function () {};
@@ -1998,7 +2007,7 @@ function sendUploadPart(optionts, rawData, onProgress) {
 }
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 ;(function (root, factory) {
@@ -2271,7 +2280,7 @@ function sendUploadPart(optionts, rawData, onProgress) {
 }));
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 ;(function (root, factory) {
@@ -2424,15 +2433,6 @@ function sendUploadPart(optionts, rawData, onProgress) {
 	return CryptoJS.SHA1;
 
 }));
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-module.exports = __webpack_require__(1);
 
 /***/ })
 /******/ ]);
