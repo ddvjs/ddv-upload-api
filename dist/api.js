@@ -841,10 +841,10 @@ module.exports =
 
 module.exports = DdvUploadApi;
 function DdvUploadApi(options) {
-  if (!(this instanceof DdvUploadApi)) {
-    return new DdvUploadApi(options);
-  } else {
+  if (this instanceof DdvUploadApi) {
     return this.constructor(options);
+  } else {
+    return new DdvUploadApi(options);
   }
 }
 // 提供外部设定api
@@ -970,8 +970,8 @@ var util = module.exports = {
 
 "use strict";
 
-// 编码库
 
+// 编码库
 var cryptoJsCore = __webpack_require__(0);
 __webpack_require__(8);
 __webpack_require__(9);
@@ -1076,11 +1076,11 @@ module.exports = {
         return Promise.reject(util.setErrorId('GET_PART_SIZE_RETURN_PROMISE', new Error('options.getPartSize does not return Promise')));
       }
     }).then(function checkPartSize(partSize) {
-      if (!partSize.part_size) {
-        return Promise.reject(util.setErrorId('SERVER_RETURN_PART_SIZE_ERROR', new Error('server return part_size error')));
+      if (!partSize[self.useUnderline ? 'part_size' : 'partSize']) {
+        return Promise.reject(util.setErrorId('SERVER_RETURN_PART_SIZE_ERROR', new Error('server return part size error')));
       }
-      if (!partSize.part_sum) {
-        return Promise.reject(util.setErrorId('SERVER_RETURN_PART_SUM_ERROR', new Error('server return part_sum error')));
+      if (!partSize[self.useUnderline ? 'part_sum' : 'partSum']) {
+        return Promise.reject(util.setErrorId('SERVER_RETURN_PART_SUM_ERROR', new Error('server return part sum error')));
       }
 
       self._fileInfo.partSize = partSize.partSize || partSize.part_size;
@@ -1430,31 +1430,31 @@ module.exports = {
   },
   // 合并上传
   completeUpload: function completeUpload(fileInfo) {
-    return api.api(this.completeUploadUrl || 'v1_0/upload/complete').method(this.completeUploadMethod || 'POST').send(fileInfo).then(function (res) {
+    return api.api(this.completeUploadUrl || 'v1_0/api/upload/complete').method(this.completeUploadMethod || 'POST').send(fileInfo).then(function (res) {
       return res && res.data || {};
     });
   },
   // 获取上传文件分块信息
   getFilePartSign: function getFilePartSign(fileInfo) {
-    return api.api(this.getFilePartSignUrl || 'v1_0/upload/file_part_md5').method(this.getFilePartSignMethod || 'PUT').send(fileInfo).then(function (res) {
+    return api.api(this.getFilePartSignUrl || 'v1_0/api/upload/filePartMd5').method(this.getFilePartSignMethod || this.getMethod || 'PUT').send(fileInfo).then(function (res) {
       return res && res.data || {};
     });
   },
   // 获取上传文件分块信息
   getFilePartInfo: function getFilePartInfo(fileInfo) {
-    return api.api(this.getFilePartInfoUrl || 'v1_0/upload/file_part_info').method(this.getFilePartInfoMethod || 'PUT').send(fileInfo).then(function (res) {
+    return api.api(this.getFilePartInfoUrl || 'v1_0/api/upload/filePartInfo').method(this.getFilePartInfoMethod || this.getMethod || 'PUT').send(fileInfo).then(function (res) {
       return res && res.data || {};
     });
   },
   // 获取上传文件id
   getFileId: function getFileId(fileInfo) {
-    return api.api(this.getFileIdUrl || 'v1_0/upload/file_id').method(this.getFileIdMethod || 'PUT').send(fileInfo).then(function (res) {
+    return api.api(this.getFileIdUrl || 'v1_0/api/upload/fileId').method(this.getFileIdMethod || this.getMethod || 'PUT').send(fileInfo).then(function (res) {
       return res && res.data || {};
     });
   },
   // 获取上传文件分块大小
   getPartSize: function getPartSize(fileInfo) {
-    return api.api(this.getPartSizeUrl || 'v1_0/upload/file_part_size').method(this.getPartSizeMethod || 'PUT').send(fileInfo).then(function (res) {
+    return api.api(this.getPartSizeUrl || 'v1_0/api/upload/filePartSize').method(this.getPartSizeMethod || this.getMethod || 'PUT').send(fileInfo).then(function (res) {
       return res && res.data || {};
     });
   }
